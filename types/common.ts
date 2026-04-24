@@ -17,3 +17,24 @@ export interface ListReq {
   sortBy?: "createdAt" | "updatedAt";
   order?: "asc" | "desc";
 }
+
+export interface CursorPaginationReq {
+  cursor?: string;
+  pageSize: number;
+  sortBy?: "createdAt" | "updatedAt";
+  order?: "asc" | "desc";
+}
+
+export interface CursorPaginationResp<T> {
+  lists: T[];
+  total: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  nextCursor?: string;
+  prevCursor?: string;
+}
+
+export interface SearchHighlight {
+  title?: string;
+  description?: string;
+}

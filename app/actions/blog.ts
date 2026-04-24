@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { type BlogCreateReq, type BlogListReq } from "@/types/blog";
+import { type BlogCreateReq, type BlogListReq, type BlogCursorListReq, type RelatedBlogsReq } from "@/types/blog";
 import { checkAdmin } from "@/lib/auth-guard";
 import { blogStore } from "@/stores/blog";
 
@@ -20,12 +20,36 @@ const blogListReqSchema = z.object({
   sortBy: z.enum(["createdAt", "updatedAt"]).optional(),
   order: z.enum(["asc", "desc", ""]).optional(),
   title: z.string().trim().optional(),
+  search: z.string().trim().optional(),
   slug: z.string().trim().optional(),
   categoryId: z.string().trim().optional(),
   tagId: z.string().trim().optional(),
   tagIds: z.array(z.string().trim()).optional(),
   blogIDs: z.array(z.string().trim()).optional(),
   published: z.boolean().optional(),
+});
+
+const blogCursorListReqSchema = z.object({
+  cursor: z.string().trim().optional(),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(PAGE_SIZE_MAX)
+    .optional()
+    .default(10),
+  sortBy: z.enum(["createdAt", "updatedAt"]).optional(),
+  order: z.enum(["asc", "desc", ""]).optional(),
+  search: z.string().trim().optional(),
+  categoryId: z.string().trim().optional(),
+  tagId: z.string().trim().optional(),
+  published: z.boolean().optional(),
+});
+
+const relatedBlogsReqSchema = z.object({
+  blogId: z.string().trim(),
+  categoryId: z.string().trim(),
+  limit: z.coerce.number().int().positive().optional().default(5),
 });
 
 const blogIdSchema = z.string().trim();
@@ -50,6 +74,34 @@ export async function getBlogsAction(params?: BlogListReq) {
     }
 
     const result = await blogStore.findAll(parsed.data as BlogListReq);
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getBlogsWithCursorAction(params: BlogCursorListReq) {
+  try {
+    const parsed = blogCursorListReqSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: "参数错误" };
+    }
+
+    const result = await blogStore.findAllWithCursor(parsed.data as BlogCursorListReq);
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getRelatedBlogsAction(params: RelatedBlogsReq) {
+  try {
+    const parsed = relatedBlogsReqSchema.safeParse(params);
+    if (!parsed.success) {
+      return { success: false, error: "参数错误" };
+    }
+
+    const result = await blogStore.findRelatedBlogs(parsed.data as RelatedBlogsReq);
     return { success: true, data: result };
   } catch (error: any) {
     return { success: false, error: error.message };

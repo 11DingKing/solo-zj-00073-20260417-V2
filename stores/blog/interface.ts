@@ -3,6 +3,9 @@ import {
   type BlogCreateReq,
   type BlogListReq,
   type BlogListResp,
+  type BlogCursorListReq,
+  type BlogCursorListResp,
+  type RelatedBlogsReq,
 } from "@/types/blog";
 
 export interface IBlogStore {
@@ -12,5 +15,7 @@ export interface IBlogStore {
   findById(id: string): Promise<Blog | null>;
   findBySlug(slug: string): Promise<Blog | null>;
   findAll(params?: BlogListReq): Promise<BlogListResp>;
+  findAllWithCursor(params: BlogCursorListReq): Promise<BlogCursorListResp>;
+  findRelatedBlogs(params: RelatedBlogsReq): Promise<Blog[]>;
   togglePublish(id: string): Promise<Blog | null>;
 }

@@ -10,7 +10,30 @@ interface BlogCardProps {
   blog: Blog;
 }
 
+function HighlightedText({
+  text,
+  highlighted,
+}: {
+  text: string;
+  highlighted?: string;
+}) {
+  if (!highlighted) {
+    return <>{text}</>;
+  }
+
+  return (
+    <span
+      dangerouslySetInnerHTML={{
+        __html: highlighted,
+      }}
+    />
+  );
+}
+
 export function BlogCard({ blog }: BlogCardProps) {
+  const displayTitle = blog._highlight?.title || blog.title;
+  const displayDescription = blog._highlight?.description || blog.description;
+
   return (
     <Card
       className={`
@@ -19,7 +42,6 @@ export function BlogCard({ blog }: BlogCardProps) {
       `}
     >
       <Link href={`/blog/${blog.slug}`} className="flex gap-4">
-        {/* 封面图 */}
         {blog.cover && (
           <div
             className={`
@@ -40,40 +62,39 @@ export function BlogCard({ blog }: BlogCardProps) {
           </div>
         )}
 
-        {/* 内容区 */}
         <div className="flex flex-1 flex-col gap-2 p-4">
-          {/* 标题 */}
           <h3
             className={`
               line-clamp-1 text-lg font-semibold text-text transition-colors
               group-hover:text-accent
             `}
           >
-            {blog.title}
+            <HighlightedText
+              text={blog.title}
+              highlighted={blog._highlight?.title}
+            />
           </h3>
 
-          {/* 描述 */}
           <Text type="secondary" className="line-clamp-2 text-sm">
-            {blog.description}
+            <HighlightedText
+              text={blog.description}
+              highlighted={blog._highlight?.description}
+            />
           </Text>
 
-          {/* 底部元信息 */}
           <div className="mt-auto flex flex-wrap items-center gap-2">
-            {/* 分类 */}
             {blog.category && (
               <Badge variant="secondary" className="text-xs">
                 {blog.category.name}
               </Badge>
             )}
 
-            {/* 标签 */}
             {blog.tags?.slice(0, 3).map((tag) => (
               <Badge key={tag.id} variant="outline" className="text-xs">
                 {tag.name}
               </Badge>
             ))}
 
-            {/* 时间 */}
             <Text type="secondary" size="sm" className="ml-auto">
               {formatSimpleDate(new Date(blog.createdAt))}
             </Text>

@@ -13,16 +13,17 @@ interface BlogPageProps {
     page?: string;
     pageSize?: string;
     title?: string;
+    search?: string;
     categoryId?: string;
     tagId?: string;
     sortBy?: "createdAt" | "updatedAt";
     order?: "asc" | "desc";
+    cursor?: string;
   }>;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
 
-// Hero 区域 - Apple 大胆风格
 function Hero({
   categories,
   tags,
@@ -32,6 +33,7 @@ function Hero({
   tags: Tag[];
   currentFilters: {
     title?: string;
+    search?: string;
     categoryId?: string;
     tagId?: string;
     sortBy?: "createdAt" | "updatedAt";
@@ -45,7 +47,6 @@ function Hero({
         md:min-h-[60vh] md:py-28
       `}
     >
-      {/* 动态渐变背景 */}
       <div
         className={`
           pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))]
@@ -59,9 +60,7 @@ function Hero({
         `}
       />
 
-      {/* 内容 */}
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4">
-        {/* 标题 */}
         <div className="mb-10 text-center">
           <h1
             className={`
@@ -81,7 +80,6 @@ function Hero({
           </p>
         </div>
 
-        {/* 筛选栏 */}
         <BlogFilterBar
           categories={categories}
           tags={tags}
@@ -97,11 +95,14 @@ async function BlogListContent({ searchParams }: BlogPageProps) {
   const page = parseInt(params.page || "1", 10);
   const pageSize = parseInt(params.pageSize || String(DEFAULT_PAGE_SIZE), 10);
 
+  const searchKeyword = params.search || params.title;
+
   const [blogsResult, categoriesResult, tagsResult] = await Promise.all([
     getBlogsAction({
       page,
       pageSize,
       title: params.title,
+      search: searchKeyword,
       categoryId: params.categoryId,
       tagId: params.tagId,
       sortBy: params.sortBy || "createdAt",
@@ -128,7 +129,14 @@ async function BlogListContent({ searchParams }: BlogPageProps) {
   const categories = categoriesResult.data?.lists || [];
   const tags = tagsResult.data?.lists || [];
 
-  const baseUrl = `/blog?title=${params.title || ""}&categoryId=${params.categoryId || ""}&tagId=${params.tagId || ""}&sortBy=${params.sortBy || "createdAt"}&order=${params.order || "desc"}`;
+  const baseUrl = `/blog?${new URLSearchParams({
+    title: params.title || "",
+    search: params.search || "",
+    categoryId: params.categoryId || "",
+    tagId: params.tagId || "",
+    sortBy: params.sortBy || "createdAt",
+    order: params.order || "desc",
+  }).toString()}`;
 
   return (
     <>
@@ -137,6 +145,7 @@ async function BlogListContent({ searchParams }: BlogPageProps) {
         tags={tags}
         currentFilters={{
           title: params.title,
+          search: params.search,
           categoryId: params.categoryId,
           tagId: params.tagId,
           sortBy: params.sortBy || "createdAt",
@@ -144,7 +153,6 @@ async function BlogListContent({ searchParams }: BlogPageProps) {
         }}
       />
 
-      {/* 博客列表 */}
       <div className="mx-auto max-w-4xl px-4 pb-16">
         <BlogList
           blogs={blogs.lists || []}
@@ -152,6 +160,7 @@ async function BlogListContent({ searchParams }: BlogPageProps) {
           currentPage={page}
           pageSize={pageSize}
           baseUrl={baseUrl}
+          searchKeyword={searchKeyword}
         />
       </div>
     </>

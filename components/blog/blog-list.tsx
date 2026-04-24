@@ -17,7 +17,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@/components/ui/empty";
-import { FileText, RotateCcw } from "lucide-react";
+import { FileText, RotateCcw, Search } from "lucide-react";
 
 interface BlogListProps {
   blogs: Blog[];
@@ -25,6 +25,7 @@ interface BlogListProps {
   currentPage: number;
   pageSize: number;
   baseUrl: string;
+  searchKeyword?: string;
 }
 
 export function BlogList({
@@ -33,6 +34,7 @@ export function BlogList({
   currentPage,
   pageSize,
   baseUrl,
+  searchKeyword,
 }: BlogListProps) {
   const totalPages = Math.ceil(total / pageSize);
 
@@ -41,10 +43,16 @@ export function BlogList({
       <Empty className="border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <FileText />
+            {searchKeyword ? <Search /> : <FileText />}
           </EmptyMedia>
-          <EmptyTitle>暂无博客</EmptyTitle>
-          <EmptyDescription>没有找到符合条件的博客文章</EmptyDescription>
+          <EmptyTitle>
+            {searchKeyword ? "未找到相关文章" : "暂无博客"}
+          </EmptyTitle>
+          <EmptyDescription>
+            {searchKeyword
+              ? `没有找到与 "${searchKeyword}" 相关的博客文章，请尝试其他关键词`
+              : "没有找到符合条件的博客文章"}
+          </EmptyDescription>
         </EmptyHeader>
         <Link
           href="/blog"
@@ -104,14 +112,22 @@ export function BlogList({
 
   return (
     <div className="space-y-6">
-      {/* 博客列表 */}
+      {searchKeyword && (
+        <div className="flex items-center gap-2 text-sm text-text-secondary">
+          <Search className="h-4 w-4" />
+          <span>
+            找到 <strong className="text-text">{total}</strong> 篇与 "
+            <strong className="text-accent">{searchKeyword}</strong>" 相关的文章
+          </span>
+        </div>
+      )}
+
       <div className="space-y-4">
         {blogs.map((blog) => (
           <BlogCard key={blog.id} blog={blog} />
         ))}
       </div>
 
-      {/* 分页 */}
       {totalPages > 1 && (
         <div className="flex flex-col items-center gap-4">
           <span className="text-sm text-text-secondary">共 {total} 篇博客</span>

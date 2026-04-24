@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { getBlogBySlugAction } from "@/app/actions/blog";
+import { getBlogBySlugAction, getRelatedBlogsAction } from "@/app/actions/blog";
 import BlogContent from "@/components/blog/blog-content";
 import { TableOfContents } from "@/components/blog/table-of-contents";
+import { RelatedBlogs } from "@/components/blog/related-blogs";
 import { Badge } from "@/components/ui/badge";
 import { Title } from "@/components/ui/typography/title";
 import { formatSimpleDate } from "@/lib/time";
@@ -13,7 +14,6 @@ interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// 生成 SEO 元数据
 export async function generateMetadata({
   params,
 }: BlogDetailPageProps): Promise<Metadata> {
@@ -52,12 +52,18 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   const blog = result.data;
 
-  // 计算阅读时间（假设每分钟阅读 300 字）
   const readingTime = Math.max(1, Math.ceil(blog.content.length / 300));
+
+  const relatedBlogsResult = await getRelatedBlogsAction({
+    blogId: blog.id,
+    categoryId: blog.categoryId,
+    limit: 5,
+  });
+
+  const relatedBlogs = relatedBlogsResult.success ? relatedBlogsResult.data || [] : [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
-      {/* 返回链接 */}
       <Link
         href="/blog"
         className={`
@@ -69,9 +75,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       </Link>
 
       <div className="flex gap-8">
-        {/* 主内容区 */}
         <article className="min-w-0 flex-1">
-          {/* 封面图 */}
           {blog.cover && (
             <div className="mb-8 aspect-video w-full overflow-hidden rounded-xl">
               <Image
@@ -85,7 +89,6 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </div>
           )}
 
-          {/* 文章头部 */}
           <header className="mb-8">
             <Title level={1} className="mb-4">
               {blog.title}
@@ -104,13 +107,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </div>
           </header>
 
-          {/* 分隔线 */}
           <div className="mb-8 h-px bg-border" />
 
-          {/* 文章内容 */}
           <BlogContent content={blog.content} />
 
-          {/* 标签 */}
           {blog.tags && blog.tags.length > 0 && (
             <div className="mt-8 flex flex-wrap gap-2">
               {blog.tags.map((tag) => (
@@ -120,9 +120,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               ))}
             </div>
           )}
+
+          <RelatedBlogs blogs={relatedBlogs} />
         </article>
 
-        {/* 右侧目录（桌面端显示） */}
         <aside className={`
           hidden w-64 shrink-0
           lg:block
